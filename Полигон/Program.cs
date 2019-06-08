@@ -33,7 +33,7 @@ namespace Полигон
         {
 
             #region Загружаем модель в библиотеку и получаем имя модели "ТЕСТ"
-            byte[] arrayModel = File.ReadAllBytes(@"D:\Программирование\Диплом\model\UploadModelIdParam-arch_ac.bin");
+            byte[] arrayModel = File.ReadAllBytes(@"D:\Программирование\Диплом\model\UploadModelIdParam.bin");
             IntPtr in_params = Marshal.AllocHGlobal(arrayModel.Length);
             Marshal.Copy(arrayModel, 0, in_params, arrayModel.Length);
 
@@ -49,28 +49,26 @@ namespace Полигон
 
             #region Передаем в модель предметную область "arch_ac" и получаем в переменную b код ошибки 2752970754 0xa4170002
             
-            byte[] subjectArray = Encoding.Default.GetBytes("arch_ac");
-            byte[] subjectArrayLength = Encoding.Default.GetBytes($"{subjectArray.Length}");
-            byte [] nameOfModelLength = Encoding.Default.GetBytes($"{nameOfModel.Length}");
+           // byte[] subjectArray = Encoding.Default.GetBytes("arch_ac");
+              byte[] subjectArray = Encoding.Default.GetBytes("radio_hf");
 
-            byte[] one = new byte[subjectArray.Length + subjectArrayLength.Length + nameOfModelLength.Length+ nameOfModel.Length];
-
-            int k = 0;
-            foreach (byte i in subjectArrayLength)
-            {
-                one[k] = i;
-                k++;
-            }           
+            byte[] one = new byte[subjectArray.Length + 4 + 4 + nameOfModel.Length];
+          //  one[0] = 7;
+            one[0] = 8;
+            one[1] = 0;
+            one[2] = 0;
+            one[3] = 0;
+            int k = 4;
             foreach (byte i in subjectArray)
             {
                 one[k] = i;
                 k++;
-            }           
-            foreach (byte i in nameOfModelLength)
-            {
-                one[k] = i;
-                k++;
             }
+            UInt32 val = (UInt32)nameOfModel.Length;
+            one[k++] = (byte)(val & 0xff);
+            one[k++] = (byte)((val >> 8) & 0xff);
+            one[k++] = (byte)((val >> 16) & 0xff);
+            one[k++] = (byte)((val >> 24) & 0xff);
             foreach (byte i in nameOfModel)
             {
                 one[k] = i;
@@ -79,20 +77,19 @@ namespace Полигон
 
             in_params = Marshal.AllocHGlobal(one.Length);
             Marshal.Copy(one, 0, in_params, one.Length);
-
-         
             //   Marshal.FreeHGlobal(in_params);
             uint b = ControlSystemEntryPoint(3, in_params, (uint)one.Length, out out_params, out out_byte_count);
             uint pSize;
             IntPtr error = ControlSystemGetErrorDescription(b, out pSize);
-            var result =  Marshal.PtrToStringUTF8(error);
+            var result = Marshal.PtrToStringUTF8(error);
             byte[] nameOfProcess = new byte[out_byte_count];
             Marshal.Copy(out_params, nameOfModel, 0, (int)out_byte_count);
-              Console.WriteLine(Encoding.UTF8.GetString(nameOfProcess));
+            Console.WriteLine(Encoding.UTF8.GetString(nameOfProcess));
+            Console.WriteLine(result);
             Console.ReadKey();
             #endregion
 
-         
+
 
         }
 
